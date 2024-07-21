@@ -1,6 +1,6 @@
 from src.config import settings
 from fastapi import FastAPI
-from src.feed.router import router as main_router
+from src.posts.router import router as main_router
 
 
 app = FastAPI(

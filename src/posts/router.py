@@ -1,4 +1,6 @@
-from src.models import Post, User
+# from src.models import Post, User
+from src.auth.models import User
+from src.posts.models import Post
 from src.database import get_session
 from fastapi import APIRouter, Depends
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -11,8 +13,8 @@ async def root(*, session: AsyncSession = Depends(get_session),
                # post: Post
                ):
     author = User(
-        username='user1',
-        email='user1@mail.com',
+        username='user2',
+        email='user2@mail.com',
     )
     db_post = Post(
         body='hello',
@@ -23,3 +25,4 @@ async def root(*, session: AsyncSession = Depends(get_session),
     await session.commit()
     await session.refresh(db_post)
     return db_post
+    # return{'ping': 'pong'}

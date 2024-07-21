@@ -7,7 +7,7 @@ from src.feed.router import router as main_router
 
 @asynccontextmanager
 async def lifespan(fastapi_app: FastAPI):
-    init_db()
+    await init_db()
     yield
 
 

@@ -1,15 +1,15 @@
-from fastapi import APIRouter, Depends
-from sqlmodel import Session
-from src.database import get_session
 from src.models import Post, User
+from src.database import get_session
+from fastapi import APIRouter, Depends
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 router = APIRouter()
 
 
 @router.post('/')
-def root(*, session: Session = Depends(get_session),
-         # post: Post
-         ):
+async def root(*, session: AsyncSession = Depends(get_session),
+               # post: Post
+               ):
     author = User(
         username='user1',
         email='user1@mail.com',
@@ -20,6 +20,6 @@ def root(*, session: Session = Depends(get_session),
     )
     session.add(author)
     session.add(db_post)
-    session.commit()
-    session.refresh(db_post)
+    await session.commit()
+    await session.refresh(db_post)
     return db_post

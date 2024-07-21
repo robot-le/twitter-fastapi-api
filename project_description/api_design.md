@@ -1,6 +1,6 @@
 # Good old twitter
 
-The microblog app with text only notes, lists of likes and nothing extra.
+The microblog app with text only posts, lists of likes and nothing extra.
 
 - version = v1
 - prefix = /api/v1
@@ -80,64 +80,64 @@ todo: put auth to separate service
 - Description: Unfollow a user
 - Response: Success or failure message
 
-**GET /users/{user_id}/notes**
-- Description: Retrieve notes created by the specified user
+**GET /users/{user_id}/posts**
+- Description: Retrieve posts created by the specified user
 - Query params:
   - page (optional)
   - limit (optional, max=100)
-- Response: Array of note objects
+- Response: Array of post objects
 
 **GET /users/{user_id}/liked**
-- Description: Retrieve notes, liked by specified user
+- Description: Retrieve posts, liked by specified user
 - Query params:
   - page (optional)
   - limit (optional, max=100)
-- Response: Array of note objects
+- Response: Array of post objects
 
-### Notes
-**GET /notes/{note_id}**
-- Description: Retrieve a specific note
-- Response: Note object
+### Posts
+**GET /posts/{post_id}**
+- Description: Retrieve a specific post
+- Response: Post object
 
-**DELETE /notes/{note_id}**
-- Description: Delete a specific note
+**DELETE /posts/{post_id}**
+- Description: Delete a specific post
 - Response: Success or failure message
 
-**POST /notes**
-- Description: Create a new note
+**POST /posts**
+- Description: Create a new post
 - Request body:
-  - text
-- Response: Created note object
+  - body
+- Response: Created post object
 
-**POST /notes/{note_id}/repost**
-- Description: Repost the note
+**POST /posts/{post_id}/repost**
+- Description: Repost the post
 - Response: Success or failure message
 
 todo: delete repost?
 
-**POST /notes/{note_id}/like**
-- Description: Like the note (add to liked list)
+**POST /posts/{post_id}/like**
+- Description: Like the post (add to liked list)
 - Response: Success or failure message
 
-**DELETE /notes/{note_id}/like**
-- Description: Remove like from the note
+**DELETE /posts/{post_id}/like**
+- Description: Remove like from the post
 - Response: Success or failure message
 
 ### Feeds
 **GET /explore**
-- Description: Retrieve notes from users not followed by the current user
+- Description: Retrieve posts from users not followed by the current user
 - Query params:
   - page (optional)
   - limit (optional, max=100)
 
 **GET /search**
-- Description: Search for notes or users
+- Description: Search for posts or users
 - Query params:
   - q (required) - Query string
-  - entity (optional, default='notes') - Entity to search, either 'notes' or 'users'
+  - entity (optional, default='posts') - Entity to search, either 'posts' or 'users'
 
 **GET /feed**
-- Description: Retrieve the current user's feed (notes from followed users)
+- Description: Retrieve the current user's feed (posts from followed users)
 - Query params:
   - page (optional)
   - limit (optional, max=100)

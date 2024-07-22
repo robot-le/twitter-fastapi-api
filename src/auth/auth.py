@@ -10,7 +10,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from src.config import settings
 from src.models import User
-from src.database import SessionDep
+from src.dependencies import SessionDep
 
 
 class AuthHandler:
@@ -35,24 +35,40 @@ class AuthHandler:
             algorithm=settings.algorithm,
         )
 
-    @staticmethod
     async def get_current_user(
+            self,
             token: Annotated[str, Depends(security_scheme)],
             session: SessionDep,
     ):
-        credentials_exception = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-        try:
-            payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
-            username: str = payload.get("sub")
-            if username is None:
-                raise credentials_exception
-        except jwt.exceptions.InvalidTokenError:
-            raise credentials_exception
+        payload = self.decode_token(token)
+        username: str = payload.get('sub')
         user = await session.scalar(select(User).where(User.username == username))
         if user is None:
-            raise credentials_exception
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='Could not validate credentials',
+                headers={'WWW-Authenticate': 'Bearer'},
+            )
         return user
+
+    def auth(self, token: Annotated[str, Depends(security_scheme)]):
+        return self.decode_token(token)
+
+    @staticmethod
+    def decode_token(token):
+        try:
+            payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+            if payload := payload.get('sub'):
+                return payload
+            else:
+                error = 'Could not validate credentials'
+        except jwt.ExpiredSignatureError:
+            error = 'Expired signature'
+        except jwt.InvalidTokenError:
+            error = 'Invalid token'
+
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=error,
+            headers={'WWW-Authenticate': 'Bearer'},
+        )

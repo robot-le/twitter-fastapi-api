@@ -74,3 +74,7 @@ class Token(SQLModel):
     token_type: str
     expires_in: int
     user: UserCreated
+
+
+class PostCreate(SQLModel):
+    body: str = Field(max_length=140)

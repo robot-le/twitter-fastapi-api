@@ -5,8 +5,8 @@ from sqlmodel import select, or_
 from src.config import settings
 from src.models import UserInput, User, UserCreated, Token
 from src.schemas import ResponseBase
-from src.database import SessionDep
 from src.auth.auth import AuthHandler
+from src.dependencies import SessionDep, CurrentUserDep
 
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.encoders import jsonable_encoder
@@ -81,6 +81,6 @@ async def login(
 
 @router.get("/users/me/", response_model=UserCreated)
 async def read_users_me(
-        current_user: Annotated[User, Depends(auth_handler.get_current_user)],
+        current_user: CurrentUserDep,
 ):
     return UserCreated(**current_user.model_dump())

@@ -1,8 +1,8 @@
-from datetime import datetime
-from sqlalchemy import text
 from typing import Self
 from sqlmodel import Field, SQLModel, Relationship, Column, DateTime
+from datetime import datetime
 from pydantic import EmailStr, model_validator
+from sqlalchemy import text
 
 
 class Post(SQLModel, table=True):
@@ -67,3 +67,10 @@ class UserLogin(SQLModel):
         unique=True,
     )
     password: str
+
+
+class Token(SQLModel):
+    access_token: str
+    token_type: str
+    expires_in: int
+    user: UserCreated

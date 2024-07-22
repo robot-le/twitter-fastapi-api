@@ -1,12 +1,17 @@
-from fastapi import APIRouter, HTTPException
-from src.models import UserInput, User, UserCreated
-from src.auth.auth import AuthHandler
-from src.database import SessionDep
+from typing import Annotated
+from datetime import timedelta
 from sqlmodel import select, or_
-from fastapi import status
-from fastapi.responses import JSONResponse
+
+from src.config import settings
+from src.models import UserInput, User, UserCreated, Token
 from src.schemas import ResponseBase
+from src.database import SessionDep
+from src.auth.auth import AuthHandler
+
+from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.encoders import jsonable_encoder
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import JSONResponse
 
 router = APIRouter(prefix='/auth')
 auth_handler = AuthHandler()
@@ -21,7 +26,7 @@ async def register(user: UserInput, session: SessionDep):
     existing_user = await session.scalar(statement)
     if existing_user:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail='Username or email is taken',
         )
 
@@ -47,5 +52,35 @@ async def register(user: UserInput, session: SessionDep):
 
 
 @router.post('/login')
-async def login():
-    pass
+async def login(
+        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+        session: SessionDep,
+):
+    user_obj = await session.scalar(select(User).where(User.username == form_data.username))
+    if not user_obj or not auth_handler.verify_password(user_obj.password, form_data.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    token_expires = timedelta(minutes=settings.token_expire_time_minutes)
+    token = auth_handler.create_token({'sub': user_obj.username}, token_expires)
+    return JSONResponse(
+        jsonable_encoder(ResponseBase[Token](
+            status='success',
+            message='Login successful',
+            data=Token(
+                access_token=token,
+                token_type='Bearer',
+                expires_in=token_expires.seconds,
+                user=UserCreated(**user_obj.model_dump())
+            )
+        ))
+    )
+
+
+@router.get("/users/me/", response_model=UserCreated)
+async def read_users_me(
+        current_user: Annotated[User, Depends(auth_handler.get_current_user)],
+):
+    return UserCreated(**current_user.model_dump())

@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     secret_key: str
     database_uri: str = 'sqlite:///' + os.path.join(basedir, 'app.db')
     languages: list[str] = ['en', 'ru']
+    token_expire_time_minutes: int = 30
+    algorithm: str = 'HS256'
 
     # mail_server: str | None
     # mail_port: int | None

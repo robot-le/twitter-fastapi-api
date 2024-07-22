@@ -1,6 +1,4 @@
-# from src.models import Post, User
-from src.auth.models import User
-from src.posts.models import Post
+from src.models import Post, User
 from src.database import get_session
 from fastapi import APIRouter, Depends
 from sqlmodel.ext.asyncio.session import AsyncSession

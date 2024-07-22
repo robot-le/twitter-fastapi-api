@@ -9,8 +9,7 @@ from src.config import settings
 
 from alembic import context
 
-from src.auth.models import *
-from src.posts.models import *
+from src.models import *
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

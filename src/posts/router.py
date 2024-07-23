@@ -1,10 +1,10 @@
-from src.models import Post, PostCreate
-from src.schemas import ResponseBase
+from src.utils import create_response
+from src.models import Post
+from src.schemas import PostCreate, ResponseBase, ResponseBaseWithObject
 from src.dependencies import CurrentUserDep, SessionDep, AuthDep
 
 from fastapi import APIRouter, status, HTTPException
 from fastapi.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
 
 from starlette.requests import Request
 
@@ -14,13 +14,13 @@ from sqlmodel import select
 router = APIRouter(prefix='/posts')
 
 
-@router.post('/')
+@router.post('', response_model=ResponseBaseWithObject[Post])
 async def create_post(
         post: PostCreate,
         request: Request,
         session: SessionDep,
         current_user: CurrentUserDep,
-):
+) -> JSONResponse:
     p = Post(
         body=post.body,
         author=current_user,
@@ -28,12 +28,9 @@ async def create_post(
     session.add(p)
     await session.commit()
     await session.refresh(p)
-    return JSONResponse(
-        jsonable_encoder(ResponseBase[Post](
-            status='success',
-            message='Post created successfully',
-            data=Post(**p.model_dump()),
-        )),
+    return create_response(
+        'Post created successfully',
+        obj=Post(**p.model_dump()),
         status_code=status.HTTP_201_CREATED,
         headers={
             'Location': f'{request.base_url}posts/{p.id}'
@@ -41,12 +38,12 @@ async def create_post(
     )
 
 
-@router.get('/{post_id}')
+@router.get('/{post_id}', response_model=ResponseBaseWithObject[Post])
 async def get_post(
         post_id: int,
         session: SessionDep,
-        token: AuthDep,
-) -> Post:
+        token_payload: AuthDep,
+) -> JSONResponse:
     query = select(Post).where(Post.id == post_id)
     p = await session.scalar(query)
     if not p:
@@ -54,15 +51,22 @@ async def get_post(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Post not found',
         )
-    return p
+    return create_response(
+        message='Post',
+        obj=Post(**p.model_dump())
+    )
 
 
-@router.delete('/{post_id}', status_code=200)
+@router.delete(
+    '/{post_id}',
+    status_code=200,
+    response_model=ResponseBase,
+)
 async def delete_post(
         post_id: int,
         session: SessionDep,
-        token: AuthDep,
-):
+        token_payload: AuthDep,
+) -> JSONResponse:
     p = await session.get(Post, post_id)
     if not p:
         raise HTTPException(
@@ -71,7 +75,6 @@ async def delete_post(
         )
     await session.delete(p)
     await session.commit()
-    return ResponseBase(
-        status='success',
+    return create_response(
         message='Post deleted successfully',
     )

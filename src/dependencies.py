@@ -11,4 +11,4 @@ SessionDep = Annotated[AsyncSession, Depends(get_session)]
 from src.auth.auth import AuthHandler
 auth_handler = AuthHandler()
 CurrentUserDep = Annotated[User, Depends(auth_handler.get_current_user)]
-AuthDep = Annotated[User, Depends(auth_handler.auth)]
+AuthDep = Annotated[dict, Depends(auth_handler.auth)]

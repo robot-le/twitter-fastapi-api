@@ -25,7 +25,7 @@ class AuthHandler:
         return self.ph.verify(hashed_password, plain_password)
 
     @staticmethod
-    def create_token(data: dict, expires_in: timedelta):
+    def create_token(data: dict, expires_in: timedelta) -> str:
         to_encode = data.copy()
         expire = datetime.now(timezone.utc) + expires_in
         to_encode.update({"exp": expire})
@@ -39,7 +39,7 @@ class AuthHandler:
             self,
             token: Annotated[str, Depends(security_scheme)],
             session: SessionDep,
-    ):
+    ) -> User:
         payload = self.decode_token(token)
         username: str = payload.get('sub')
         user = await session.scalar(select(User).where(User.username == username))
@@ -51,17 +51,13 @@ class AuthHandler:
             )
         return user
 
-    def auth(self, token: Annotated[str, Depends(security_scheme)]):
+    def auth(self, token: Annotated[str, Depends(security_scheme)]) -> dict:
         return self.decode_token(token)
 
     @staticmethod
-    def decode_token(token):
+    def decode_token(token) -> dict:
         try:
-            payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
-            if payload := payload.get('sub'):
-                return payload
-            else:
-                error = 'Could not validate credentials'
+            return jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         except jwt.ExpiredSignatureError:
             error = 'Expired signature'
         except jwt.InvalidTokenError:

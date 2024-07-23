@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     languages: list[str] = ['en', 'ru']
     token_expire_time_minutes: int = 30
     algorithm: str = 'HS256'
+    post_char_limit: int = 140
 
     # mail_server: str | None
     # mail_port: int | None

@@ -2,23 +2,29 @@ from typing import Annotated
 from datetime import timedelta
 from sqlmodel import select, or_
 
+from src.utils import create_response
 from src.config import settings
-from src.models import UserInput, User, UserCreated, Token
-from src.schemas import ResponseBase
+from src.models import User
+from src.schemas import UserInput, User as UserSchema, Token, ResponseBaseWithObject
 from src.auth.auth import AuthHandler
-from src.dependencies import SessionDep, CurrentUserDep
+from src.dependencies import SessionDep
 
 from fastapi import APIRouter, HTTPException, Depends, status
-from fastapi.encoders import jsonable_encoder
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
+
+from starlette.requests import Request
 
 router = APIRouter(prefix='/auth')
 auth_handler = AuthHandler()
 
 
-@router.post('/registration')
-async def register(user: UserInput, session: SessionDep):
+@router.post('/registration', response_model=ResponseBaseWithObject[UserSchema])
+async def register(
+        user: UserInput,
+        session: SessionDep,
+        request: Request,
+) -> JSONResponse:
     statement = select(User).where(or_(
         User.username == user.username,
         User.email == user.email,
@@ -30,7 +36,7 @@ async def register(user: UserInput, session: SessionDep):
             detail='Username or email is taken',
         )
 
-    hashed_pwd = auth_handler.hash_password(user.password1)
+    hashed_pwd = auth_handler.hash_password(user.password)
     u = User(
         username=user.username,
         email=user.email,
@@ -40,22 +46,19 @@ async def register(user: UserInput, session: SessionDep):
     await session.commit()
     await session.refresh(u)
 
-    return JSONResponse(
-        jsonable_encoder(ResponseBase[UserCreated](
-            status='success',
-            message='User successfully registered',
-            data=UserCreated(**u.model_dump()),
-        )),
+    return create_response(
+        message='User successfully registered',
+        obj=UserSchema(**u.model_dump()),
         status_code=status.HTTP_201_CREATED,
-        headers={'Location': 'url/to/user'}  # todo: change url
+        headers={'Location': f'{request.base_url}users/{u.id}'},
     )
 
 
-@router.post('/login')
+@router.post('/login', response_model=ResponseBaseWithObject[Token])
 async def login(
         form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
         session: SessionDep,
-):
+) -> JSONResponse:
     user_obj = await session.scalar(select(User).where(User.username == form_data.username))
     if not user_obj or not auth_handler.verify_password(user_obj.password, form_data.password):
         raise HTTPException(
@@ -65,22 +68,11 @@ async def login(
         )
     token_expires = timedelta(minutes=settings.token_expire_time_minutes)
     token = auth_handler.create_token({'sub': user_obj.username}, token_expires)
-    return JSONResponse(
-        jsonable_encoder(ResponseBase[Token](
-            status='success',
-            message='Login successful',
-            data=Token(
-                access_token=token,
-                token_type='Bearer',
-                expires_in=token_expires.seconds,
-                user=UserCreated(**user_obj.model_dump())
-            )
-        ))
+    return create_response(
+        message='Login successful',
+        obj=Token(
+            access_token=token,
+            expires_in=token_expires.seconds,
+            user=UserSchema(**user_obj.model_dump())
+        )
     )
-
-
-@router.get("/users/me/", response_model=UserCreated)
-async def read_users_me(
-        current_user: CurrentUserDep,
-):
-    return UserCreated(**current_user.model_dump())

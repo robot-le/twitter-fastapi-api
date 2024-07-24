@@ -8,7 +8,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 class Settings(BaseSettings):
     app_name: str = 'Microblog'
     secret_key: str
-    database_uri: str = 'sqlite:///' + os.path.join(basedir, 'app.db')
+    database_uri: str
     languages: list[str] = ['en', 'ru']
     token_expire_time_minutes: int = 30
     algorithm: str = 'HS256'

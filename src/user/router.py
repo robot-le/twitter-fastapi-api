@@ -1,6 +1,6 @@
 from src.utils import create_response
 from src.models import User
-from src.schemas import User as UserSchema, ResponseBaseWithObject, ResponseBase
+from src.schemas import User as UserSchema, ResponseBaseWithObject, ResponseBase, UserUpdate
 from src.dependencies import CurrentUserDep, SessionDep
 
 from fastapi import APIRouter, status, HTTPException
@@ -20,15 +20,6 @@ async def get_current_user(
         obj=UserSchema(**current_user.model_dump()),
         status_code=status.HTTP_200_OK,
     )
-
-
-from sqlmodel import SQLModel
-
-
-class UserUpdate(SQLModel):
-    username: str | None = None
-    bio: str | None = None
-    email: str | None = None
 
 
 @router.patch("", response_model=ResponseBaseWithObject[UserSchema])

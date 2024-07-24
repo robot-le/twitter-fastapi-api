@@ -16,7 +16,7 @@ class TestAPI:
         )
         assert res.status_code == status.HTTP_201_CREATED
 
-    async def test_login(self, ac, token):
+    async def test_login(self, ac):
         login_res = await ac.post(
             app.url_path_for('login'),
             data={
@@ -26,6 +26,25 @@ class TestAPI:
         )
         data = login_res.json()
         assert data['status'] == 'success'
+
+    async def test_follow_user(self, ac, access_data):
+        res = await ac.post(
+            app.url_path_for('follow', user_id=access_data[1].get('user_id')),
+            headers={
+                'Authorization': f'Bearer {access_data[0].get("user_token")}'
+            }
+        )
+        assert res.json().get('status') == 'success'
+
+    async def test_unfollow_user(self, ac, access_data):
+        url = app.url_path_for('unfollow', user_id=access_data[1].get('user_id'))
+        res = await ac.post(
+            url,
+            headers={
+                'Authorization': f'Bearer {access_data[0].get("user_token")}'
+            }
+        )
+        assert res.json().get('status') == 'success'
 
     # async def test_create_post(self, ac):
     #     pass
@@ -58,12 +77,6 @@ class TestAPI:
     #     pass
     #
     # async def test_get_user_following(self, ac):
-    #     pass
-    #
-    # async def test_follow_user(self, ac):
-    #     pass
-    #
-    # async def test_unfollow_user(self, ac):
     #     pass
     #
     # async def test_get_user_posts(self, ac):

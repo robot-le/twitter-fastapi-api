@@ -1,6 +1,6 @@
 import os
 import asyncio
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Any
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import SQLModel
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
@@ -54,15 +54,35 @@ async def ac() -> AsyncGenerator[AsyncClient, None]:
 
 
 @pytest.fixture(scope='session')
-async def token(ac) -> str:
+async def access_data(ac) -> list[dict[str, Any]]:
+
+    access_data_lst = []
+
     try:
-        login_res = await ac.post(
-            app.url_path_for('login'),
-            data={
-                'username': 'test_username',
-                'password': 'password',
-            }
-        )
-        return login_res.json().get('obj', {}).get('access_token', '')
+        for i in range(3):
+
+            await ac.post(
+                app.url_path_for('register'),
+                json={
+                    'username': f'test_username_{i}',
+                    'email': f'test_{i}@mail.com',
+                    'password': 'password',
+                    'password2': 'password',
+                }
+            )
+
+            login_res = await ac.post(
+                app.url_path_for('login'),
+                data={
+                    'username': f'test_username_{i}',
+                    'password': 'password',
+                }
+            )
+            data = login_res.json()
+            a_token = data.get('obj', {}).get('access_token')
+            user_id = data.get('obj', {}).get('user', {}).get('id')
+            access_data_lst.append({'user_token': a_token, 'user_id': user_id})
     except Exception as e:
         pytest.exit(f'Exception from token fixture was thrown: {str(e)}')
+
+    return access_data_lst

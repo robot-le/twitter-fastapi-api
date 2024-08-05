@@ -8,8 +8,7 @@ T = TypeVar('T')
 
 class ResponseBase(BaseModel):
     status: Literal['success', 'error']
-    status: str
-    message: str
+    detail: str
 
 
 class ResponseBaseWithObject(ResponseBase, Generic[T]):

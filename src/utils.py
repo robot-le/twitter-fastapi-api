@@ -16,13 +16,13 @@ def create_response(
     if obj:
         content = ResponseBaseWithObject(
             status=status,
-            message=message,
+            detail=message,
             obj=obj,
         )
     else:
         content = ResponseBase(
             status=status,
-            message=message,
+            detail=message,
         )
 
     return JSONResponse(

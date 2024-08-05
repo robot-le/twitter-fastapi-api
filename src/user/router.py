@@ -28,12 +28,10 @@ async def update_current_user(
         session: SessionDep,
         changes: UserUpdate,
 ):
-    print()
-
     statement = select(User).where(or_(
         User.username == changes.username,
         User.email == changes.email,
-        ))
+    ))
     existing_user = await session.scalar(statement)
     error = None
     if existing_user:
